@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Face check{% endblock %}
+{% block content %}
+<h2>Face verification</h2>
+<p>Account: <b>{{ username }}</b></p>
+<video id="cam" autoplay playsinline muted></video>
+<button id="btn">Verify my face</button>
+<div id="msg" class="msg"></div>
+<ul>
+  <li>Look at the camera and blink once naturally after pressing the button.</li>
+  <li>The password box appears only if your face matches the account owner.</li>
+</ul>
+<p><a href="{{ url_for('login') }}">Cancel</a></p>
+{% endblock %}
+{% block scripts %}
+<script>
+const video = document.getElementById("cam");
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+let stream;
+startCamera(video).then(s => stream = s)
+  .catch(() => { msg.textContent = "Camera blocked or unavailable."; });
+
+btn.onclick = async () => {
+  btn.disabled = true;
+  msg.className = "msg";
+  msg.textContent = "Capturing... blink once";
+  const frames = await captureFrames(video, 16, 200);
+  msg.textContent = "Verifying...";
+  const res = await postJSON("/api/verify-face", { frames: frames });
+  if (res.ok) {
+    stopCamera(stream);
+    location.href = res.redirect;
+    return;
+  }
+  msg.textContent = res.message;
+  msg.className = "msg err";
+  btn.disabled = !!res.locked;
+};
+</script>
+{% endblock %}

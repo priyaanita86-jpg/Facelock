@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h2>Create account</h2>
+<video id="cam" autoplay playsinline muted></video>
+<label>Username</label>
+<input id="username" autocomplete="off">
+<label>Password (min 8 characters)</label>
+<input id="password" type="password">
+<button id="btn">Capture my face and sign up</button>
+<div id="msg" class="msg"></div>
+<ul>
+  <li>Only your face should be in the frame, with good lighting.</li>
+  <li>Keep your eyes open and turn your head slightly during capture.</li>
+</ul>
+<p><a href="{{ url_for('login') }}">Back to login</a></p>
+{% endblock %}
+{% block scripts %}
+<script>
+const video = document.getElementById("cam");
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+let stream;
+startCamera(video).then(s => stream = s)
+  .catch(() => { msg.textContent = "Camera blocked or unavailable."; });
+
+btn.onclick = async () => {
+  btn.disabled = true;
+  msg.className = "msg";
+  msg.textContent = "Capturing... look at the camera";
+  const frames = await captureFrames(video, 8, 400);
+  msg.textContent = "Processing...";
+  const res = await postJSON("/api/register", {
+    username: document.getElementById("username").value,
+    password: document.getElementById("password").value,
+    frames: frames,
+  });
+  msg.textContent = res.message;
+  msg.className = "msg " + (res.ok ? "ok" : "err");
+  btn.disabled = false;
+  if (res.ok) {
+    stopCamera(stream);
+    setTimeout(() => location.href = "/login", 1500);
+  }
+};
+</script>
+{% endblock %}

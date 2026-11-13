@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Welcome, {{ user }}</h2>
+<p class="ok">You passed face verification and password login.</p>
+<h3>Recent security activity</h3>
+<ul>
+  {% for row in logs %}<li>{{ row.ts }} - {{ row.event }}</li>{% endfor %}
+</ul>
+<p><a href="{{ url_for('logout') }}">Log out</a></p>
+{% endblock %}
